@@ -31,7 +31,7 @@ io.on('connection', (socket) => {
     console.log(username, 'joined');
     rooms[socket.id] = { roomId, username };
     io.to(roomId).emit('userListUpdate', Object.values(rooms).filter(user => user.roomId === roomId).map(user => user.username));
-    io.to(roomId).emit('userJoined', { username });  // Notify others in the room that a user joined
+    socket.broadcast.to(roomId).emit('userJoined', { username });
   });
 
   socket.on('leaveRoom', ({ roomId, username }) => {
@@ -62,6 +62,20 @@ io.on('connection', (socket) => {
       io.to(roomId).emit('userListUpdate', Object.values(rooms).filter(user => user.roomId === roomId).map(user => user.username));
       io.to(roomId).emit('userLeft', { username: user.username });  // Notify others in the room that a user left
     }
+  });
+
+
+  // WebRTC signaling
+  socket.on('offer', (payload) => {
+    io.to(payload.target).emit('offer', payload);
+  });
+
+  socket.on('answer', (payload) => {
+    io.to(payload.target).emit('answer', payload);
+  });
+
+  socket.on('ice-candidate', (payload) => {
+    io.to(payload.target).emit('ice-candidate', payload);
   });
 });
 
